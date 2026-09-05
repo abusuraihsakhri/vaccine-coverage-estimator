@@ -1,6 +1,9 @@
 """
 Enterprise Security, PHI Outbound Guard, and HMAC-SHA256 Audit Trail.
 
+Security note: Set AUDIT_SECRET_KEY environment variable in production.
+A random key is generated per-session if not set, which invalidates
+signature verification across restarts (acceptable for dev/test only).
 """
 import os
 import re
@@ -8,9 +11,9 @@ import json
 import time
 import hmac
 import hashlib
+import secrets
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-from pydantic import BaseModel, Field
 
 PHI_PATTERNS = [
     re.compile(r"\b(?:MRN|mrn)[:#\s-]*\d{4,10}\b", re.IGNORECASE),
@@ -57,7 +60,13 @@ class PHIGuard:
 class AuditTrail:
     """Cryptographic Tamper-Evident HMAC-SHA256 Audit Trail."""
     def __init__(self, secret_key: Optional[str] = None):
-        self.secret_key = (secret_key or os.getenv("AUDIT_SECRET_KEY", "vaccine-coverage-estimator-master-audit-key-2026")).encode("utf-8")
+        key = secret_key or os.getenv("AUDIT_SECRET_KEY")
+        if not key:
+            # Generate a cryptographically random key for this session only.
+            # Signatures will NOT be verifiable across restarts without a
+            # persistent secret — set AUDIT_SECRET_KEY in production.
+            key = secrets.token_hex(32)
+        self.secret_key = key.encode("utf-8")
         self.logs: List[Dict[str, Any]] = []
 
     def log(self, actor: str, actor_tier: str, event_type: str, details: Dict[str, Any]) -> Dict[str, Any]:
