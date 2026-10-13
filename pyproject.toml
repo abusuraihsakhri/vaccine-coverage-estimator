@@ -41,6 +41,9 @@ dev = [
 vaccine-coverage = "cli:main"
 vaccine-coverage-core = "vaccine_coverage:main"
 
+[tool.setuptools]
+py-modules = ["vaccine_coverage", "immunization", "cli", "enrichment", "simulator"]
+
 [tool.setuptools.packages.find]
 include = ["agents*"]
 
