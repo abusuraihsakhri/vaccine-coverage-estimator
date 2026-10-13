@@ -1,7 +1,7 @@
 """Regression tests for the vaccine-specific estimator."""
 import math
 import pytest
-from coverage import estimate_coverage
+from immunization import estimate_coverage
 from vaccine_coverage import assess_row
 
 
@@ -9,7 +9,7 @@ def test_reference_wilson_interval():
     result = estimate_coverage(100, 80, 90, 72)
     assert result["coverage_percent"] == 80.0
     assert result["dropout_percent"] == 20.0
-    assert result["ci_lower_percent"] == pytest.approx(71.14, abs=0.02)
+    assert result["ci_lower_percent"] == pytest.approx(71.12, abs=0.02)
     assert result["ci_upper_percent"] == pytest.approx(86.67, abs=0.02)
 
 
