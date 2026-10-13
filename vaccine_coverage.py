@@ -272,7 +272,8 @@ def assess_row(row):
             from immunization import estimate_coverage
             return estimate_coverage(
                 row["population"], row["vaccinated"],
-                row.get("first_dose") or None, row.get("final_dose") or None,
+                (row.get("first_dose") if row.get("first_dose") not in ("", None) else None),
+                (row.get("final_dose") if row.get("final_dose") not in ("", None) else None),
                 row.get("confidence") or 0.95,
             )
         # try common lab keys
