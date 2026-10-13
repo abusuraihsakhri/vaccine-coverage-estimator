@@ -55,3 +55,12 @@ def test_optional_api():
     client = TestClient(app)
     assert client.post("/api/coverage", json={"population": 100, "vaccinated": 80}).json()["coverage_percent"] == 80
     assert client.post("/api/coverage", json={"population": 100, "vaccinated": 101}).status_code == 422
+
+
+def test_audit_signatures_detect_tampering():
+    from agents.base import AuditTrail
+    log = AuditTrail("test-key")
+    entry = log.log("tester", "analyst", "estimate", {"status": "success"})
+    assert log.verify_integrity() is True
+    entry["event_type"] = "changed"
+    assert log.verify_integrity() is False
