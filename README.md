@@ -1,223 +1,72 @@
 # Vaccine Coverage Estimator
 
-> **Domain:** Clinical Decision Support & Biomedical Computing  
-> **Reference Guidelines & Standards:** Standard Clinical Formulations & ISO/IEC Quality Frameworks
+Population immunization coverage, two-sided 95% Wilson score interval, and optional dose-series dropout. The original clinical calculators and agent interfaces remain for compatibility.
 
-<div align="center">
+## Browser application
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
-
-</div>
-
----
-
-## 📖 What It Does
-
-Vaccine Coverage Estimator provides clinical calculation utilities for lab value interpretation. It calculates coverage metrics, scores, and confidence intervals from immunization registry data, and includes specialized calculators for common clinical indices (MELD-Na, QTc, BMI, HbA1c, APRI/FIB-4).
-
----
-
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-### 🔬 Clinical Calculation Functions
-
-- **`calculate_score()`** — Generic formula: weighted sum of numeric inputs.
-- **`calculate_meld_na()`** — MELD-Na score for liver disease severity (bilirubin, creatinine, INR, sodium).
-- **`calculate_qtc()`** — QTc (corrected QT interval) using Bazett's formula.
-- **`calculate_bmi_z()`** — BMI calculation with WHO classification and approximate z-score.
-- **`convert_hba1c()`** — Bidirectional conversion between HbA1c (%) and estimated average glucose (mg/dL).
-- **`calculate_apri_fib4()`** — APRI and FIB-4 scores for hepatic fibrosis assessment.
-
-### 🔄 Data Processing
-
-- **`assess_row()`** — Routes a data row to the appropriate clinical calculator based on present keys.
-- **`process_csv()`** — Batch processes CSV files with path-traversal protection and input validation.
-
----
-
-## 💻 Installation
+Open `web/index.html` in a recent browser, or serve it locally:
 
 ```bash
-# Clone the repository
-git clone https://github.com/abusuraihsakhri/vaccine-coverage-estimator.git
-cd vaccine-coverage-estimator
-
-# Install dependencies
-pip install -e .
-
-# Or with development dependencies
-pip install -e ".[dev]"
+python -m http.server 8000 --directory web
 ```
 
----
+Enter eligible-population and vaccinated-person counts, then select **Calculate coverage**. For dose-series dropout, provide both first- and final-dose counts from the same cohort. The CSV tool accepts required `population` and `vaccinated` columns, plus optional `group`, `first_dose`, and `final_dose`. Download the sample CSV from the app and export the results as CSV.
 
-## 🧪 Usage
+Browser calculations and CSV processing use local JavaScript; no server, Python runtime, external scripts, analytics, or data upload is required.
 
-### 1. Command Line Interface (Core Module)
+## Methods and constraints
+
+- Coverage (%) = 100 × vaccinated people / eligible population.
+- The confidence interval is the two-sided **Wilson score interval** for a binomial proportion (95% confidence).
+- Dropout (%) = 100 × (first-dose count − final-dose count) / first-dose count; undefined if no first doses were recorded.
+
+Counts must be whole numbers. Population must be greater than zero, vaccinated and first-dose counts must not exceed population, and final-dose counts must not exceed first-dose counts. Cohort and reporting period definitions must be consistent.
+
+**Limitations:** Wilson intervals do not account for ascertainment bias, inaccurate denominator estimates, repeat doses, clustering, or registry incompleteness. Population census coverage is descriptive rather than a sample estimate. This calculator is not a clinical decision-support tool.
+
+## Python CLI and API
+
+Install Python 3.10+ and the package:
 
 ```bash
-# Single calculation with JSON input
-python -m vaccine_coverage single --json '{"bilirubin": 2.0, "creatinine": 1.2, "inr": 1.5, "sodium": 135}'
-
-# Batch CSV processing
-python -m vaccine_coverage batch --input sample.csv --output results.csv
+python -m pip install -e ".[dev]"
+python cli.py coverage --population 1000 --vaccinated 850 --first-dose 900 --final-dose 810
+python -m vaccine_coverage single --json '{"population":1000,"vaccinated":850}'
+python -m vaccine_coverage batch --input web/sample.csv --output results.csv
 ```
 
-### 2. Enterprise CLI (with Agent System)
-
-```bash
-# Single task evaluation
-python cli.py audit --task-id TASK-01 --primary 28.5 --secondary 14.2
-
-# Batch processing
-python cli.py batch -i input.csv -o output.csv
-
-# Chat interface
-python cli.py chat "Explain coverage metrics"
-
-# Verify audit trail integrity
-python cli.py verify-audit
-```
-
-### 3. FastAPI REST Server
-
-```bash
-python cli.py serve --host 127.0.0.1 --port 8000
-```
-
-Then visit:
-- `http://localhost:8000/health` — Health check
-- `http://localhost:8000/metrics` — Operational metrics
-- `http://localhost:8000/docs` — Interactive API documentation
-
-### 4. Python API
+Import the same calculation directly:
 
 ```python
-from vaccine_coverage import assess_row, calculate_meld_na
-
-# Route-based calculation
-result = assess_row({"bilirubin": 2.5, "creatinine": 1.5, "inr": 1.8, "sodium": 132})
-print(result)
-
-# Direct calculator
-meld = calculate_meld_na(bilirubin=2.5, creatinine=1.5, inr=1.8, sodium=132)
-print(meld)
+from immunization import estimate_coverage
+print(estimate_coverage(1000, 850, 900, 810))
 ```
 
----
+An optional local FastAPI service is available through `python cli.py serve`. Its `POST /api/coverage` endpoint accepts a JSON object with `population`, `vaccinated`, and optional dose counts. The original `audit`, `batch`, `chat` commands, audit API, and legacy clinical calculators remain available but are **not validated clinical decision-support algorithms**.
 
-## 📐 Input Data Schema
-
-### CSV Fields for `process_csv()`
-
-The system automatically detects which calculator to use based on column names:
-
-| Calculator | Required Fields | Optional Fields |
-|:-----------|:----------------|:----------------|
-| MELD-Na | `bilirubin`, `creatinine` | `inr`, `sodium`, `albumin`, `sex`, `dialysis` |
-| QTc | `qt` or `qt_ms` | `rr_ms`, `hr_bpm` or `heart_rate` |
-| BMI | `weight_kg`, `height_cm` | `age_months` or `age`, `sex` |
-| HbA1c | `hba1c_percent` or `eag_mgdl` | — |
-| APRI/FIB-4 | `ast_u_l` | `alt_u_l`, `platelets_109`, `age_years` |
-| Generic Score | Any numeric fields | — |
-
-### Sample CSV
-
-```csv
-id,value,qty
-A,10,2
-B,20,3
-```
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, emails, and patient identifiers from outbound data.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Path Traversal Protection:** Input/output file paths are validated to prevent directory traversal attacks.
-* **Secure Defaults:** Audit keys are randomly generated per-session when `AUDIT_SECRET_KEY` is not set. Set this environment variable in production for persistent signature verification.
-
-### Environment Variables
-
-| Variable | Purpose | Required |
-|:---------|:--------|:---------|
-| `AUDIT_SECRET_KEY` | HMAC-SHA256 signing key for audit trail | Recommended (production) |
-| `MODEL_PROVIDER` | LLM provider selection (`mock`, `ollama`, `openai`, etc.) | No (default: mock) |
-
----
-
-## 🧪 Testing & Verification
-
-Run the complete test suite:
+## Testing
 
 ```bash
-pytest -v
+python -m pytest
+node --check web/app.js
+node --test tests_js/*.test.cjs
 ```
 
-Run with coverage:
+CI tests Python 3.10–3.12 and Node 22. The static app uses features supported in modern Chrome, Firefox, and Safari.
+
+## Privacy and security
+
+The browser app processes aggregate counts locally. Do not upload patient-level identifiable data. The local API has no built-in authentication; bind it to localhost or put it behind an authenticated gateway. The API's identifier regex guard is **not** a reliable de-identification system.
+
+For Docker, create a private persistent key before starting the container:
 
 ```bash
-pytest --cov=. --cov-report=term-missing
+export AUDIT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+docker compose up --build
 ```
 
-Execute high-throughput batch simulation benchmarks:
+Rotate any key previously copied from public examples. The audit ledger is in memory and is lost on restart even when the signing key is persistent.
 
-```bash
-python simulator.py --tasks 1000 --concurrency 8
-```
+## License
 
----
-
-## 🐳 Container Deployment
-
-```bash
-docker build -t vaccine-coverage-estimator .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secret-key vaccine-coverage-estimator
-```
-
-Or with Docker Compose:
-
-```bash
-docker-compose up -d
-```
-
----
-
-## 📁 Project Structure
-
-```
-vaccine-coverage-estimator/
-├── vaccine_coverage.py     # Core calculation module (stdlib only)
-├── cli.py                  # Enterprise CLI with agent system
-├── simulator.py            # High-throughput simulation benchmarks
-├── enrichment.py           # Feature enrichment engines
-├── pyproject.toml          # Project metadata and dependencies
-├── agents/                 # Enterprise agent system
-│   ├── supervisor.py       # Multi-worker orchestrator
-│   ├── workers.py          # Specialized domain workers
-│   ├── base.py             # Security, PHI guard, audit trail
-│   ├── models.py           # Pydantic data schemas
-│   ├── api.py              # FastAPI REST endpoints
-│   ├── metrics.py          # Prometheus metrics exporter
-│   ├── learning.py         # Bayesian calibration engine
-│   ├── llm_factory.py      # LLM provider abstraction
-│   └── streamer.py         # WebSocket telemetry broadcaster
-├── tests/                  # Test suite
-│   ├── test_calculations.py
-│   ├── test_enrichment.py
-│   └── test_vaccine_coverage_estimator.py
-├── web/index.html          # Operations console UI
-└── Dockerfile              # Container build configuration
-```
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
