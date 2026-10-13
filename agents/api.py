@@ -4,6 +4,7 @@ FastAPI REST API Server for Vaccine Coverage Estimator.
 from typing import Dict, Any, List
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from immunization import estimate_coverage
 from .base import AuditLogger, PHIGuard
 from .models import SystemTaskPayload, ConsensusDossier
 from .supervisor import SystemSupervisor
@@ -15,6 +16,22 @@ app = FastAPI(
     description="Enterprise Distributed Component Platform (Clinical & Biomedical AI)",
     version="3.0.0-ENTERPRISE",
 )
+
+
+class CoverageRequest(BaseModel):
+    population: int
+    vaccinated: int
+    first_dose: int | None = None
+    final_dose: int | None = None
+    confidence: float = 0.95
+
+
+@app.post("/api/coverage")
+def api_coverage(req: CoverageRequest):
+    try:
+        return estimate_coverage(**req.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 class ChatRequest(BaseModel):
