@@ -268,6 +268,14 @@ def calculate_score(**kwargs):
 def assess_row(row):
     """Route a data row to the appropriate clinical calculator based on present keys."""
     try:
+        if "population" in row and "vaccinated" in row:
+            from immunization import estimate_coverage
+            return estimate_coverage(
+                row["population"], row["vaccinated"],
+                (row.get("first_dose") if row.get("first_dose") not in ("", None) else None),
+                (row.get("final_dose") if row.get("final_dose") not in ("", None) else None),
+                row.get("confidence") or 0.95,
+            )
         # try common lab keys
         if "bilirubin" in row and "creatinine" in row:
             return calculate_meld_na(
@@ -300,12 +308,12 @@ def assess_row(row):
 
 def _validate_path(filepath: str) -> str:
     """Validate that a file path is safe (no path traversal outside cwd)."""
-    abs_path = os.path.abspath(filepath)
-    cwd = os.path.abspath(os.getcwd())
+    abs_path = os.path.realpath(filepath)
+    cwd = os.path.realpath(os.getcwd())
     # Allow paths under cwd or under common temp directories (for tests and batch jobs)
     temp_dirs = [os.path.abspath(os.path.realpath(tempfile.gettempdir()))] if hasattr(tempfile, 'gettempdir') else []
     allowed_roots = [cwd] + temp_dirs
-    if not any(abs_path.startswith(root) for root in allowed_roots):
+    if not any(os.path.commonpath((abs_path, root)) == root for root in allowed_roots):
         raise ValueError(f"Path outside allowed directories: {filepath}")
     return abs_path
 
@@ -336,7 +344,7 @@ def process_csv(inp, out):
     for rr in results:
         all_keys.update(rr.keys())
     # keep original first
-    extra = [k for k in all_keys if k not in fieldnames]
+    extra = sorted(k for k in all_keys if k not in fieldnames)
 
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(fieldnames) + extra)

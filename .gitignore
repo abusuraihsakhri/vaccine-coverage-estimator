@@ -39,3 +39,8 @@ output.csv
 # OS
 .DS_Store
 Thumbs.db
+
+# Local configuration / secrets
+.env
+.env.*
+!.env.example

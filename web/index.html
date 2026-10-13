@@ -1,236 +1,76 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vaccine Coverage Estimator — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Estimate population vaccination coverage, a 95% Wilson interval, and dose-series dropout locally in your browser.">
+  <meta name="color-scheme" content="light">
+  <title>Vaccine Coverage Estimator</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
 </head>
 <body>
-
-    <div class="header">
-        <div class="header-title">
-            <h1>Vaccine Coverage Estimator</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
-        </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
-        </div>
+  <header class="site-header">
+    <div class="shell topbar">
+      <div class="identity"><span class="mark" aria-hidden="true">+</span><span>Vaccine Coverage Estimator</span></div>
+      <a class="source" href="https://github.com/abusuraihsakhri/vaccine-coverage-estimator" target="_blank" rel="noopener noreferrer">Source code ↗</a>
     </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
+  </header>
+  <main class="shell">
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">IMMUNIZATION · POPULATION METRICS</p>
+      <h1 id="page-title">Measure coverage with clear denominators.</h1>
+      <p>Estimate vaccination coverage, its 95% Wilson confidence interval, and optional dose-series dropout. Calculations run entirely in this browser; no data are uploaded.</p>
+    </section>
+    <div class="workspace">
+      <section class="panel" aria-labelledby="calc-title">
+        <div class="panel-head"><span class="step">01</span><h2 id="calc-title">Single population</h2></div>
+        <form id="coverage-form" novalidate>
+          <div class="field">
+            <label for="population">Eligible population <span class="required">*</span></label>
+            <input id="population" name="population" type="number" min="1" step="1" value="1000" inputmode="numeric" required>
+            <small>Total eligible people in the reporting cohort</small>
+          </div>
+          <div class="field">
+            <label for="vaccinated">Vaccinated people <span class="required">*</span></label>
+            <input id="vaccinated" name="vaccinated" type="number" min="0" step="1" value="850" inputmode="numeric" required>
+            <small>Unique people receiving the specified dose</small>
+          </div>
+          <div class="split">
+            <div class="field"><label for="first-dose">First dose (optional)</label><input id="first-dose" name="first-dose" type="number" min="0" step="1" placeholder="e.g. 900" inputmode="numeric"></div>
+            <div class="field"><label for="final-dose">Final dose (optional)</label><input id="final-dose" name="final-dose" type="number" min="0" step="1" placeholder="e.g. 810" inputmode="numeric"></div>
+          </div>
+          <small class="field-note">For dropout, enter both doses from the same eligible cohort. Leave both blank if unavailable.</small>
+          <button class="primary" type="submit">Calculate coverage <span aria-hidden="true">→</span></button>
+          <p id="form-error" class="error" role="alert" hidden></p>
+        </form>
+      </section>
+      <section class="panel result-panel" aria-labelledby="result-title">
+        <div class="panel-head"><span class="step">02</span><h2 id="result-title">Estimate</h2></div>
+        <div id="result" aria-live="polite" aria-atomic="true">
+          <p class="empty">Enter counts, then select <strong>Calculate coverage</strong> to view results.</p>
         </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
+        <div class="method"><h3>How to interpret</h3>
+          <p><strong>Coverage</strong> = vaccinated / eligible × 100. The <strong>95% Wilson interval</strong> is a binomial uncertainty interval; it does not correct reporting bias or an incorrect denominator.</p>
+          <p><strong>Dropout</strong> = (first dose − final dose) / first dose × 100. Doses must refer to the same cohort and reporting period.</p>
         </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
+      </section>
     </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Vaccine Coverage Estimator Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "vaccine-coverage-estimator",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+    <section class="panel batch" aria-labelledby="batch-title">
+      <div class="panel-head"><span class="step">03</span><h2 id="batch-title">Batch CSV analysis</h2></div>
+      <p>Analyze multiple populations and export their estimates. Required CSV columns: <code>population</code>, <code>vaccinated</code>. Optional: <code>group</code>, <code>first_dose</code>, <code>final_dose</code>.</p>
+      <div class="batch-actions">
+        <label class="upload" for="csv-file">Choose CSV file <input id="csv-file" type="file" accept=".csv,text/csv"></label>
+        <button id="download-csv" type="button" class="secondary" disabled>Download results CSV</button>
+        <a id="sample-download" href="./sample.csv" download>Download sample CSV</a>
+      </div>
+      <p id="batch-message" class="batch-message" role="status" aria-live="polite">No file selected. Maximum size: 2 MB; maximum 10,000 data rows.</p>
+      <div class="table-scroll" id="preview-container" hidden>
+        <table><caption id="preview-caption">Preview</caption><thead><tr><th scope="col">Group</th><th scope="col">Population</th><th scope="col">Vaccinated</th><th scope="col">Coverage</th><th scope="col">95% CI</th><th scope="col">Dropout</th></tr></thead><tbody id="preview-body"></tbody></table>
+      </div>
+    </section>
+    <aside class="caution"><strong>Data quality matters.</strong> This is a descriptive population-level tool, not a clinical decision rule. Use aggregate counts only; do not upload identifiable patient-level data.</aside>
+  </main>
+  <footer class="shell footer"><span>MIT-licensed · Browser-only calculator</span><span>95% Wilson score interval · No tracking or data transfer</span></footer>
 </body>
 </html>
