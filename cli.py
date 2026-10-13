@@ -8,6 +8,7 @@ import sys
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
 from agents.base import AuditLogger
+from immunization import estimate_coverage
 
 supervisor = SystemSupervisor(model_provider="mock")
 
@@ -15,6 +16,13 @@ supervisor = SystemSupervisor(model_provider="mock")
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="vaccine-coverage-estimator", description="Vaccine Coverage Estimator")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    p_coverage = subparsers.add_parser("coverage", help="Calculate population vaccination coverage")
+    p_coverage.add_argument("--population", type=int, required=True)
+    p_coverage.add_argument("--vaccinated", type=int, required=True)
+    p_coverage.add_argument("--first-dose", type=int)
+    p_coverage.add_argument("--final-dose", type=int)
+    p_coverage.add_argument("--confidence", type=float, default=0.95)
 
     # Audit
     p_audit = subparsers.add_parser("audit", help="Run single task evaluation")
@@ -43,6 +51,14 @@ def main(argv=None):
     p_serve.add_argument("--port", type=int, default=8000)
 
     args = parser.parse_args(argv)
+
+    if args.command == "coverage":
+        try:
+            result = estimate_coverage(args.population, args.vaccinated, args.first_dose, args.final_dose, args.confidence)
+        except ValueError as exc:
+            parser.error(str(exc))
+        print(json.dumps(result, indent=2))
+        return 0
 
     if args.command == "audit":
         payload = SystemTaskPayload(
@@ -85,7 +101,7 @@ def main(argv=None):
             fieldnames = list(reader.fieldnames or [])
             rows = list(reader)
 
-        out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
         for r in rows:
             payload = SystemTaskPayload(
@@ -94,7 +110,7 @@ def main(argv=None):
                 primary_metric=float(r.get("primary_metric", 15.0)),
                 secondary_metric=float(r.get("secondary_metric", 5.0)),
                 status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                is_critical_flag=bool(r.get("is_critical_flag", False)),
+                is_critical_flag=str(r.get("is_critical_flag", "")).strip().lower() in {"1", "true", "yes"},
             )
             dossier = supervisor.process_task(payload)
             row_dict = dict(r)
