@@ -9,10 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml .
-RUN pip install --no-cache-dir fastapi uvicorn pydantic pytest
-
 COPY . .
+RUN pip install --no-cache-dir . && \\
+    groupadd --system app && useradd --system --gid app app
+USER app
 
 EXPOSE 8000
 
